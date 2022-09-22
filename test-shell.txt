@@ -1,0 +1,2 @@
+./test/hftest/hftest.py --out_initrd out/reference/qemu_aarch64_vm_clang --log out/reference/kokoro_log/debug --hypervisor out/reference/qemu_aarch64_clang/hafnium.bin --initrd test/linux/linux_test --force-long-running --vm_args 'rdinit=/test_binary --'
+./test/hftest/hftest.py --out_initrd out/reference/aem_v8a_fvp_vm_clang --out_partitions out/reference/aem_v8a_fvp_vm_clang --driver=fvp --tfa --log out/reference/kokoro_log/debug --hypervisor out/reference/aem_v8a_fvp_clang/arch_test.bin

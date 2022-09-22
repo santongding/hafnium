@@ -19,7 +19,11 @@
         "ffa_internal.h": "c",
         "interrupts_gicv3.h": "c",
         "interrupts.h": "c",
-        "abi.h": "c"
+        "abi.h": "c",
+        "types.h": "c",
+        "vmid_base.h": "c",
+        "memiter.h": "c",
+        "syscall.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

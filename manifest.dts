@@ -1,0 +1,12 @@
+/dts-v1/;
+
+/ {
+	hypervisor {
+		compatible = "hafnium,hafnium";
+		vm1 {
+			debug_name = "Linux VM";
+			kernel_filename = "vmlinuz";
+			ramdisk_filename = "initrd.img";
+		};
+	};
+};

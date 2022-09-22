@@ -59,7 +59,11 @@ static void rmmod_hafnium(void)
 /**
  * Loads and unloads the Hafnium kernel module.
  */
-TEST(linux, load_hafnium)
+static void hftest_test_fn_linux_load_hafnium(void); 
+const struct hftest_test __attribute__((used)) __attribute__((section(HFTEST_TEST_SECTION(linux, load_hafnium)))) 
+hftest_test_linux_load_hafnium = { .suite = "linux", .kind = HFTEST_KIND_TEST, .name = "load_hafnium", .is_long_running = 0, .fn = HFTEST_TEST_FN(linux, load_hafnium), }; 
+static void __attribute__((constructor)) HFTEST_TEST_CONSTRUCTOR(linux, load_hafnium)(void) { hftest_register(HFTEST_TEST_STRUCT(linux, load_hafnium)); } 
+static void HFTEST_TEST_FN(linux, load_hafnium)(void)
 {
 	insmod_hafnium();
 	rmmod_hafnium();

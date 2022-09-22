@@ -1,0 +1,2 @@
+qemu-system-aarch64 -M virt,gic_version=3 -cpu cortex-a57 -nographic -machine virtualization=true -kernel out/reference/qemu_aarch64_clang/hafnium.bin -initrd /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_vm_clang/obj/test/linux/linux_test/initrd.img -smp 1 -append 'rdinit=/test_binary -- run linux load_hafnium'
+qemu-system-aarch64 -M virt,gic_version=3 -cpu cortex-a57 -nographic -machine virtualization=true -kernel out/reference/qemu_aarch64_clang/hafnium.bin -initrd initrd.img -append "rdinit=/sbin/init"

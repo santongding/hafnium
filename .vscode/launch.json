@@ -5,6 +5,43 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "gdb",
+            "request": "attach",
+            "name": "gdb Attach",
+            "gdbpath": "/usr/bin/gdb-multiarch",
+            // "executable": "${workspaceFolder}/out/reference/qemu_aarch64_clang/qemuloader.elf",
+            "target": ":1234",
+            "remote": true,
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText",
+            "stopAtConnect": true,
+            "preLaunchTask": "run-qemu",
+            "autorun": ["add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_clang/hafnium.elf",
+            //"add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_clang/qemuloader.elf",
+            "b load_kernel","b cpu_main","b cpu_init","b load_primary","b *0x0000000040002f88"]
+        },
+        
+        {
+            "name": "Python: hftest linux",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test/hftest/hftest.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd" : "${workspaceFolder}",
+            "args" : "--out_initrd out/reference/qemu_aarch64_vm_clang --log out/reference/kokoro_log/debug --hypervisor out/reference/qemu_aarch64_clang/hafnium.bin --initrd test/linux/linux_test --force-long-running --vm_args 'rdinit=/test_binary --'"
+        },
+        {
+            "name": "Python: hftest",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test/hftest/hftest.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd" : "${workspaceFolder}",
+            "args" : "--out_initrd out/reference/aem_v8a_fvp_vm_clang --out_partitions out/reference/aem_v8a_fvp_vm_clang --driver=fvp --tfa --log out/reference/kokoro_log/debug --hypervisor out/reference/aem_v8a_fvp_clang/arch_test.bin"
+        },
+        {
             "name": "(gdb) QEMU",
             "type": "cppdbg",
             "request": "launch",
@@ -15,9 +52,9 @@
             "cwd": "${workspaceRoot}",
             "setupCommands": [
                 {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
                 },
                 {
                     // Update this with whatever VMs you want to debug.
