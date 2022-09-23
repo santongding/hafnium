@@ -6,7 +6,7 @@ void dfs(int num){
     }
     dfs(num+1);
 }
-int _start(){
+int main(){
     printf("hello, hafnium!\n");
     dfs(1);
     exit(0);

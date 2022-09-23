@@ -23,7 +23,9 @@
         "types.h": "c",
         "vmid_base.h": "c",
         "memiter.h": "c",
-        "syscall.h": "c"
+        "syscall.h": "c",
+        "std.h": "c",
+        "stdout.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

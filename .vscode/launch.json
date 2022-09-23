@@ -16,9 +16,13 @@
             "valuesFormatting": "parseText",
             "stopAtConnect": true,
             "preLaunchTask": "run-qemu",
-            "autorun": ["add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_clang/hafnium.elf",
+            "autorun": [
+            "add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_clang/hafnium.elf",
             //"add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_clang/qemuloader.elf",
-            "b load_kernel","b cpu_main","b cpu_init","b load_primary","b *0x0000000040002f88"]
+            "b load_kernel","b cpu_main","b cpu_init","b load_primary","b *0x0000000040002f88",
+            //"dir ./usr-src/apps/hello",
+            "add-symbol-file-auto ./usr-src/out/hello",
+            ]
         },
         
         {
