@@ -21,6 +21,8 @@
             //"add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_clang/qemuloader.elf",
             "b load_kernel","b cpu_main","b cpu_init","b load_primary","b *0x0000000040002f88",
             //"dir ./usr-src/apps/hello",
+            "b *0x47f00000",
+            "b *0x47f00b80",
             "add-symbol-file-auto ./usr-src/out/hello",
             ]
         },

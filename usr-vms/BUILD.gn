@@ -1,0 +1,5 @@
+group("usr-vms"){
+    deps=[
+        "hello"
+    ]
+}

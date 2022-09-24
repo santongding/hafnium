@@ -1,0 +1,5 @@
+source_set("vm_entry") {
+  sources = [
+    "entry.S",
+  ]
+}

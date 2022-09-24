@@ -25,7 +25,9 @@
         "memiter.h": "c",
         "syscall.h": "c",
         "std.h": "c",
-        "stdout.h": "c"
+        "stdout.h": "c",
+        "stdnoreturn.h": "c",
+        "transport.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

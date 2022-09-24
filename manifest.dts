@@ -18,10 +18,10 @@
 		};
 
 		vm2 {
-			debug_name = "socket0";
+			debug_name = "hello";
 			vcpu_count = <1>;
 			mem_size = <0x100000>;
-			kernel_filename = "socket0";
+			kernel_filename = "hello";
 		};
 	};
 };

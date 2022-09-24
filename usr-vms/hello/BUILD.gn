@@ -1,0 +1,16 @@
+import("//build/image/image.gni")
+import("//build/toolchain/platform.gni")
+
+vm_kernel("hello") {
+    sources = [
+        "main.c"
+    ]
+    deps = [
+        "//src:dlog",
+        "//src:panic",
+        "//src:std",
+        "//src:abort",
+        "../entry:vm_entry",
+        "//src/arch/${plat_arch}:entry",
+    ]
+}

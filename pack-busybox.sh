@@ -1,3 +1,5 @@
+set -e
+cp ~/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_vm_clang/obj/usr-vms/hello/hello.bin ./initrd/hello
 dtc -I dts -O dtb --out-version 17 -o ./initrd/manifest.dtb manifest.dts
 cd ../busybox/_install
 cp ../../hafnium/driver/linux/hafnium.ko .
