@@ -9,5 +9,5 @@ void dfs(int num){
 int main(){
     printf("hello, hafnium!\n");
     dfs(1);
-    exit(0);
+    return 0;
 }

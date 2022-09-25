@@ -27,7 +27,12 @@
         "std.h": "c",
         "stdout.h": "c",
         "stdnoreturn.h": "c",
-        "transport.h": "c"
+        "transport.h": "c",
+        "stdio.h": "c",
+        "unistd.h": "c",
+        "unistd_64.h": "c",
+        "socket.h": "c",
+        "stdint.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -1,0 +1,20 @@
+
+import("//build/toolchain/platform.gni")
+
+executable("ffa-client") {
+    sources = [
+        "main.c"
+    ]
+    include_dirs = [
+
+    "//driver/linux/inc/uapi",
+    "//third_party/linux/include/uapi",
+    ]
+    deps = [
+        
+        "//src:dlog",
+        #"//src:panic",
+        #"//src:std",
+        #"//src:abort",
+    ]
+}

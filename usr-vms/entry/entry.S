@@ -14,9 +14,9 @@ image_entry:
 	add sp, x30, #4096
 
 	/* Disable trapping floating point access in EL1. */
-	/*mov x30, #(0x3 << 20)
+	mov x30, #(0x3 << 20)
 	msr cpacr_el1, x30
-	isb*/
+	isb
 
 	/* Call into C code. */
 	bl kmain
