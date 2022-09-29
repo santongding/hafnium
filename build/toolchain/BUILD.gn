@@ -51,7 +51,7 @@ embedded_clang_toolchain("aarch64_linux_clang_usr") {
     use_platform = false
     plat_arch = "aarch64"
     plat_boot_flow = "//src/arch/aarch64:boot_flow"
-    plat_console = "//src/arch/aarch64:console"
+    plat_console = "//src/arch/fake:console"
     plat_iommu = "//src/iommu:absent"
   }
 }

@@ -55,6 +55,11 @@ noreturn void kmain(size_t memory_size)
 
 		/* Receive the packet. */
 		ret = ffa_msg_wait();
+		while(1){
+			int t = 10000000;
+			while(t--);
+			dlog(".");
+		}
 		EXPECT_EQ(ret.func, FFA_MSG_SEND_32);
 		EXPECT_LE(ffa_msg_send_size(ret), FFA_MSG_PAYLOAD_MAX);
 

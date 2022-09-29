@@ -1,0 +1,9 @@
+break load_kernel
+break cpu_main
+break cpu_init
+break load_primary
+break *0x0000000040002f88
+break *0x47f00000
+break *0x47f00b80
+break one_time_init
+break image_entry

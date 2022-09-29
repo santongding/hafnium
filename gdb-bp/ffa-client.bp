@@ -1,0 +1,3 @@
+break echo_by_vmapi
+break ../../usr-src/ffa-client/main.c:82
+break ../../usr-src/ffa-client/main.c:90

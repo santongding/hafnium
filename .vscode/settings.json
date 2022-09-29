@@ -32,7 +32,13 @@
         "unistd.h": "c",
         "unistd_64.h": "c",
         "socket.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "kernel.h": "c",
+        "module.h": "c",
+        "kthread.h": "c",
+        "compiler.h": "c",
+        "vm_ids.h": "c",
+        "platform_device.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

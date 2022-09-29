@@ -5,14 +5,26 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "hf/call.h"
 #include "hf/dlog.h"
+#include "hf/ffa.h"
+#include "hf/memiter.h"
 #include "hf/socket.h"
+#include "hf/std.h"
+#include "hf/transport.h"
 
 #include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+
+_Alignas(4096) uint8_t kstack[4096];
+static _Alignas(HF_MAILBOX_SIZE) uint8_t send_mailbox[HF_MAILBOX_SIZE];
+static _Alignas(HF_MAILBOX_SIZE) uint8_t recv_mailbox[HF_MAILBOX_SIZE];
+
+static hf_ipaddr_t send_addr = (hf_ipaddr_t)send_mailbox;
+static hf_ipaddr_t recv_addr = (hf_ipaddr_t)recv_mailbox;
 #define MAX_BUF_SIZE 256
-int main()
+void echo_by_socket()
 {
 	ffa_vm_id_t vm_id = HF_VM_ID_OFFSET + 1;
 	int port = 10;
@@ -27,7 +39,7 @@ int main()
 	socket_id = socket(PF_HF, SOCK_DGRAM, 0);
 	if (socket_id == -1) {
 		dlog("Socket creation failed: %s\n", strerror(errno));
-		return 0;
+		return;
 	}
 	dlog("Socket created successfully.\n");
 
@@ -37,7 +49,7 @@ int main()
 	addr.port = port;
 	if (connect(socket_id, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
 		dlog("Socket connection failed: %s\n", strerror(errno));
-		return 0;
+		return;
 	}
 	dlog("Socket to secondary VM %d connected on port %d.\n", vm_id, port);
 
@@ -47,7 +59,7 @@ int main()
 	 */
 	if (send(socket_id, send_buf, send_len, MSG_CONFIRM) < 0) {
 		dlog("Socket send() failed: %s\n", strerror(errno));
-		return 0;
+		return;
 	}
 	dlog("Packet with length %d sent.\n", send_len);
 
@@ -56,8 +68,42 @@ int main()
 
 	if (recv_len == -1) {
 		dlog("Socket recv() failed: %s\n", strerror(errno));
-		return 0;
+		return;
 	}
 	dlog("Packet with length %d received.\n", recv_len);
-	return 0;
+	return;
+}
+void echo_by_vmapi()
+{
+	ffa_vm_id_t vm_id = HF_VM_ID_OFFSET;
+	ffa_vm_id_t target_id = vm_id;
+	struct ffa_value r = ffa_rxtx_map(send_addr, recv_addr);
+	dlog("ret value:%p\n %d", r.func, r.arg2);
+	char msg[] = "hello, vm!";
+	struct hf_msg_hdr *hdr = (struct hf_msg_hdr *)send_mailbox;
+	hdr->dst_port = target_id;
+	hdr->src_port = vm_id;
+	memcpy(send_mailbox + sizeof(struct hf_msg_hdr), msg, sizeof(msg));
+	r = ffa_msg_send(vm_id, target_id,
+			 sizeof(struct hf_msg_hdr) + sizeof(msg), 0);
+	dlog("ret value:%p %d\n", r.func, r.arg2);
+	/*struct ffa_value r = ffa_msg_wait();
+	if (r.func != FFA_MSG_SEND_32) {
+		dlog("linux fail to recv, func: %p\n", (r.func));
+	} else {
+		dlog("linux recv: %s\n",
+		     recv_mailbox + sizeof(struct hf_msg_hdr));
+	}*/
+}
+int main()
+{
+	int pid = fork();
+	if (pid == 0) {
+		echo_by_socket();
+		dlog("finish echo by socket!\n");
+	} else {
+		exit(0);
+	}
+	// echo_by_vmapi();
+	// dlog("finish echo by vmapi!\n");
 }
