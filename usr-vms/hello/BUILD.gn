@@ -14,3 +14,19 @@ vm_kernel("hello") {
         "//src/arch/${plat_arch}:entry",
     ]
 }
+manifest("hello-manifest") {
+  source = "manifest.dts"
+  output = "hello.dtb"
+}
+
+partition_package("hello-sp") {
+  pm_offset = "0x1000"
+  img_offset = "0x2000"
+  files = [ [
+        "hello.dtb",
+        "hello.bin",
+        ":hello",
+        ":hello-manifest",
+      ] ]
+  output = "hello.img"
+}

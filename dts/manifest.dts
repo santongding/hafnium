@@ -10,24 +10,16 @@
 
 / {
 	hypervisor {
+		ffa_tee_enabled;
 		compatible = "hafnium,hafnium";
 		vm1 {
 			debug_name = "linux_test";
 			kernel_filename = "vmlinuz";
 			ramdisk_filename = "initrd.img";
-		};
-
-		vm2 {
-			debug_name = "hello";
-			vcpu_count = <1>;
-			mem_size = <0x100000>;
-			kernel_filename = "hello";
-		};
-		vm3 {
-			debug_name = "hello1";
-			vcpu_count = <1>;
-			mem_size = <0x100000>;
-			kernel_filename = "hello";
+			smc_whitelist = <
+				0x04000000
+				0x3200ffff
+				>;
 		};
 	};
 };

@@ -9,6 +9,7 @@ executable("ffa-client") {
 
     "//driver/linux/inc/uapi",
     "//third_party/linux/include/uapi",
+    "//usr-inc"
     ]
     deps = [
         

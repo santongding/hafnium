@@ -1,3 +1,4 @@
+add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/secure_qemu_aarch64_clang/hafnium.elf
 break load_kernel
 break cpu_main
 break cpu_init
@@ -7,3 +8,4 @@ break *0x47f00000
 break *0x47f00b80
 break one_time_init
 break image_entry
+b one_time_init_mm

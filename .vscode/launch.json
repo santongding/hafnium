@@ -17,14 +17,23 @@
             "stopAtConnect": true,
             "preLaunchTask": "run-qemu",
             "autorun": [
-            "add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_clang/hafnium.elf",
-            //"add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/qemu_aarch64_clang/qemuloader.elf",
+            "add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/secure_qemu_aarch64_clang/hafnium.elf",
+            //"add-symbol-file-auto /home/os/Documents/arm-develop/hafnium/out/reference/secure_qemu_aarch64_clang/qemuloader.elf",
             //"dir ./usr-src/apps/hello",
             "add-symbol-file-auto ./out/reference/aarch64_linux_clang/ffa-client",
             ]
         },
         
         {
+            "name": "Python: hftest both world",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test/hftest/hftest.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd" : "${workspaceFolder}",
+            "args" : "--out_partitions out/reference/secure_aem_v8a_fvp_vm_clang --log out/reference/kokoro_log/debug --spmc out/reference/secure_aem_v8a_fvp_clang/hafnium.bin --driver=fvp --hypervisor out/reference/aem_v8a_fvp_clang/hafnium.bin --partitions_json test/vmapi/ffa_secure_partitions/ffa_both_world_partitions_test.json"
+        },        {
             "name": "Python: hftest linux",
             "type": "python",
             "request": "launch",
@@ -32,7 +41,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd" : "${workspaceFolder}",
-            "args" : "--out_initrd out/reference/qemu_aarch64_vm_clang --log out/reference/kokoro_log/debug --hypervisor out/reference/qemu_aarch64_clang/hafnium.bin --initrd test/linux/linux_test --force-long-running --vm_args 'rdinit=/test_binary --'"
+            "args" : "--out_initrd out/reference/aem_v8a_fvp_vm_clang --out_partitions out/reference/secure_aem_v8a_fvp_vm_clang --log out/reference/kokoro_log/debug --driver=fvp --hypervisor out/reference/aem_v8a_fvp_clang/hafnium.bin  --initrd test/linux/linux_test --force-long-running --vm_args 'rdinit=/test_binary --'"
         },
         {
             "name": "Python: hftest",

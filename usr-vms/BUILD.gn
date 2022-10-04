@@ -1,5 +1,5 @@
 group("usr-vms"){
     deps=[
-        "hello"
+        "hello:hello-sp"
     ]
 }

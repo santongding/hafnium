@@ -38,7 +38,13 @@
         "kthread.h": "c",
         "compiler.h": "c",
         "vm_ids.h": "c",
-        "platform_device.h": "c"
+        "platform_device.h": "c",
+        "hf-usr-protocol.h": "c",
+        "slab.h": "c",
+        "irq.h": "c",
+        "mm.h": "c",
+        "proc_fs.h": "c",
+        "bug.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -21,8 +21,8 @@ declare_args() {
 
   # The level of debug logs to include. This should match one of the levels
   # defined in dlog.h.
-  log_level = "LOG_LEVEL_INFO"
-
+  # log_level = "LOG_LEVEL_INFO"
+  log_level = "LOG_LEVEL_VERBOSE"
   # Whether assertions are included in the build, this is overriden from the Makefile
   # based on the enable_assertions arg passed through gn
   enable_assertions = 1

@@ -13,16 +13,11 @@
 #include "hf/std.h"
 #include "hf/transport.h"
 
+#include "hf-usr-protocol.h"
 #include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 
-_Alignas(4096) uint8_t kstack[4096];
-static _Alignas(HF_MAILBOX_SIZE) uint8_t send_mailbox[HF_MAILBOX_SIZE];
-static _Alignas(HF_MAILBOX_SIZE) uint8_t recv_mailbox[HF_MAILBOX_SIZE];
-
-static hf_ipaddr_t send_addr = (hf_ipaddr_t)send_mailbox;
-static hf_ipaddr_t recv_addr = (hf_ipaddr_t)recv_mailbox;
 #define MAX_BUF_SIZE 256
 void echo_by_socket()
 {
@@ -73,37 +68,26 @@ void echo_by_socket()
 	dlog("Packet with length %d received.\n", recv_len);
 	return;
 }
-void echo_by_vmapi()
+void echo_direct()
 {
-	ffa_vm_id_t vm_id = HF_VM_ID_OFFSET;
-	ffa_vm_id_t target_id = vm_id;
-	struct ffa_value r = ffa_rxtx_map(send_addr, recv_addr);
-	dlog("ret value:%p\n %d", r.func, r.arg2);
-	char msg[] = "hello, vm!";
-	struct hf_msg_hdr *hdr = (struct hf_msg_hdr *)send_mailbox;
-	hdr->dst_port = target_id;
-	hdr->src_port = vm_id;
-	memcpy(send_mailbox + sizeof(struct hf_msg_hdr), msg, sizeof(msg));
-	r = ffa_msg_send(vm_id, target_id,
-			 sizeof(struct hf_msg_hdr) + sizeof(msg), 0);
-	dlog("ret value:%p %d\n", r.func, r.arg2);
-	/*struct ffa_value r = ffa_msg_wait();
-	if (r.func != FFA_MSG_SEND_32) {
-		dlog("linux fail to recv, func: %p\n", (r.func));
+	int f = open("/proc/hf-usr-pipe", O_WRONLY);
+	struct hf_usr_protocol proto = {
+		.vm_id = 2,
+	};
+	if (f == -1) {
+		dlog("fail to open proc file");
 	} else {
-		dlog("linux recv: %s\n",
-		     recv_mailbox + sizeof(struct hf_msg_hdr));
-	}*/
+		int ret = write(f, (void *)&proto,
+				sizeof(struct hf_usr_protocol));
+		dlog("ret: %d\n", ret);
+	}
 }
 int main()
 {
-	int pid = fork();
-	if (pid == 0) {
-		echo_by_socket();
-		dlog("finish echo by socket!\n");
-	} else {
-		exit(0);
-	}
+	// echo_by_socket();
+	//	dlog("finish echo by socket!\n");
 	// echo_by_vmapi();
 	// dlog("finish echo by vmapi!\n");
+	echo_direct();
+	dlog("finish echo direct!\n");
 }

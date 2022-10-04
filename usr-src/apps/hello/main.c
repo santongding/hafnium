@@ -6,8 +6,16 @@ void dfs(int num){
     }
     dfs(num+1);
 }
+__uint64_t read_el(){
+
+
+    __uint64_t __val;                        
+    asm volatile("mrs %0, currentEL" : "=r" (__val));    
+    return __val;                            \
+}
 int main(){
     printf("hello, hafnium!\n");
-    dfs(1);
+    printf("%x\n",read_el());
+    //dfs(1);
     return 0;
 }
