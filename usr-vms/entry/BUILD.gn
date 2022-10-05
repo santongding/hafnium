@@ -1,5 +1,6 @@
 source_set("vm_entry") {
   sources = [
     "entry.S",
+    "sp_secondary_entry.S"
   ]
 }
