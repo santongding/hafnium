@@ -34,32 +34,14 @@
 	} while (0)
 
 alignas(4096) uint8_t kstack[4096];
+/*
 static alignas(HF_MAILBOX_SIZE) uint8_t send[HF_MAILBOX_SIZE];
 static alignas(HF_MAILBOX_SIZE) uint8_t recv[HF_MAILBOX_SIZE];
 
 static hf_ipaddr_t send_addr = (hf_ipaddr_t)send;
 static hf_ipaddr_t recv_addr = (hf_ipaddr_t)recv;
+*/
 
-static void swap(uint64_t *a, uint64_t *b)
-{
-	uint64_t t = *a;
-	*a = *b;
-	*b = t;
-}
-
-static uint64_t read_el(){
-
-
-	uint64_t __val;                        
-    __asm__ volatile("mrs %0, currentEL" : "=r" (__val));    
-    return (__val>>2 )&3;                            \
-}
-static uint64_t read_NS(){
-	uint64_t __val;
-	__val = (uint64_t)& __val;                        
-    // __asm__ volatile("mrs %0, SP" : "=r" (__val));    
-    return ((__val)>>63)&1;    
-}
 
 static void log_ret(struct ffa_value ret)
 {
@@ -67,7 +49,7 @@ static void log_ret(struct ffa_value ret)
 }
 static void register_direct_resp()
 {
-	dlog("start waiting\n");
+	// dlog("start waiting\n");
 	struct ffa_value ret = ffa_msg_wait();
 	for (;;) {
 		if (ret.func == FFA_MSG_SEND_DIRECT_REQ_32) {
@@ -83,49 +65,38 @@ static void register_direct_resp()
 		}
 	}
 }
-
-noreturn void kmain(size_t memory_size)
-{
-	dlog_enable_lock();
-	ffa_rxtx_map(send_addr, recv_addr);
-	dlog("%d %d\n",read_el(),read_NS());
-	register_direct_resp();
-	for (;;);
-
-
-	EXPECT_FFA_ERROR(ffa_rx_release(), FFA_DENIED);
-	for (;;) {
-		struct ffa_value ret;
-
-		/* Receive the packet. */
-		ret = ffa_msg_wait();
-		/*while(1){
-			int t = 10000000;
-			while(t--);
-			dlog(".");
-		}*/
-
-		EXPECT_EQ(ret.func, FFA_MSG_SEND_32);
-		EXPECT_LE(ffa_msg_send_size(ret), FFA_MSG_PAYLOAD_MAX);
-
-		/* Echo the message back to the sender. */
-		memcpy_s(send, FFA_MSG_PAYLOAD_MAX, recv,
-			 ffa_msg_send_size(ret));
-
-		/* Swap the socket's source and destination ports */
-		struct hf_msg_hdr *hdr = (struct hf_msg_hdr *)send;
-
-		dlog("recv: %s\n", send + sizeof(struct hf_msg_hdr));
-		swap(&(hdr->src_port), &(hdr->dst_port));
-
-		/* Swap the destination and source ids. */
-		ffa_vm_id_t dst_id = ffa_sender(ret);
-		ffa_vm_id_t src_id = ffa_receiver(ret);
-
-		EXPECT_EQ(ffa_rx_release().func, FFA_SUCCESS_32);
-		EXPECT_EQ(
-			ffa_msg_send(src_id, dst_id, ffa_msg_send_size(ret), 0)
-				.func,
-			FFA_SUCCESS_32);
+void test_main_sp(bool is_boot_vcpu){
+	for(;;){
+		// dlog("is boot vcpu:%d\n",is_boot_vcpu);
+		register_direct_resp();
 	}
+}
+
+noreturn void kmain(void)
+{
+	extern void secondary_ep_entry(void);
+	struct ffa_value res;
+	dlog_info("start from begin\n");
+	/*
+	 * Initialize the stage-1 MMU and identity-map the entire address space.
+	 */
+/*
+	if (!hftest_mm_init()) {
+		HFTEST_LOG_FAILURE();
+		HFTEST_LOG(HFTEST_LOG_INDENT "Memory initialization failed");
+		abort();
+	}*/
+
+	/* Register entry point for secondary vCPUs. */
+	res = ffa_secondary_ep_register((uintptr_t)secondary_ep_entry);
+	log_ret(res);
+
+	/* Register RX/TX buffers via FFA_RXTX_MAP */
+	// set_up_mailbox();
+
+	test_main_sp(true);
+
+	for(;;);
+	/* Do not expect to get to this point, so abort. */
+	// abort();
 }
