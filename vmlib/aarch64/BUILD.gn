@@ -17,3 +17,9 @@ source_set("svc_call") {
     "svc_call.c",
   ]
 }
+
+source_set("smc_call") {
+  sources = [
+    "smc_call.c",
+  ]
+}

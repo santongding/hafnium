@@ -72,7 +72,7 @@ void echo_direct()
 {
 	int f = open("/proc/hf-usr-pipe", O_WRONLY);
 	struct hf_usr_protocol proto = {
-		.vm_id = 2,
+		.vm_id = 0x8001,
 	};
 	if (f == -1) {
 		dlog("fail to open proc file");

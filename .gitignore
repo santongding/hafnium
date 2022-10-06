@@ -11,3 +11,4 @@ project/*/
 *.o
 initrd
 initrd.img
+ns-manifest-o.dts
