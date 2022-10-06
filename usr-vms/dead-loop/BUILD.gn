@@ -1,0 +1,32 @@
+import("//build/image/image.gni")
+import("//build/toolchain/platform.gni")
+
+vm_kernel("dead-loop") {
+    sources = [
+        "main.c"
+    ]
+    deps = [
+        "//src:dlog",
+        "//src:panic",
+        "//src:std",
+        "//src:abort",
+        "../entry:vm_entry",
+        "//src/arch/${plat_arch}:entry",
+    ]
+}
+manifest("dead-loop-manifest") {
+  source = "manifest.dts"
+  output = "dead-loop.dtb"
+}
+
+partition_package("dead-loop-sp") {
+  pm_offset = "0x1000"
+  img_offset = "0x2000"
+  files = [ [
+        "dead-loop.dtb",
+        "dead-loop.bin",
+        ":dead-loop",
+        ":dead-loop-manifest",
+      ] ]
+  output = "dead-loop.img"
+}

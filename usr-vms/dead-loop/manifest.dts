@@ -10,17 +10,16 @@
 
 / {
 	compatible = "arm,ffa-manifest-1.0";
-	debug_name = "hello-sp";
+	debug_name = "dead-loop-sp";
 
 	/* Properties */
 	ffa-version = <0x00010001>; /* 31:16 - Major, 15:0 - Minor */
-	uuid = <0x9458bb2d 0x353b4ee2 0xaa25710c 0x99b73ddc>;
-	execution-ctx-count = <8>;
+	uuid = <0x9458bb2d 0x353b4ee2 0xaa25710c 0x99b73ddd>;
+	execution-ctx-count = <2>;
 	exception-level = <2>; /* S-EL1 */
 	execution-state = <0>; /* AARCH64 */
-	load-address = <0x6380000>;
+	load-address = <0x6480000>;
 	entrypoint-offset = <0x2000>;
-	boot-order = <0>;
 	xlat-granule = <0>; /* 4KiB */
 	messaging-method = <0x7>; /* Supports direct and indirect requests. */
 	notification-support; /* Receipt of notifications. */

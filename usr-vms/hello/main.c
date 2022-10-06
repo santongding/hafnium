@@ -33,7 +33,7 @@
 		EXPECT_EQ(ffa_error_code(v), (ffa_error)); \
 	} while (0)
 
-alignas(4096) uint8_t kstack[4096];
+alignas(4096) uint8_t kstack[8][4096];
 /*
 static alignas(HF_MAILBOX_SIZE) uint8_t send[HF_MAILBOX_SIZE];
 static alignas(HF_MAILBOX_SIZE) uint8_t recv[HF_MAILBOX_SIZE];
