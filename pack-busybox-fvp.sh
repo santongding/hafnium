@@ -19,5 +19,7 @@ cp -r ../../hafnium/usr-src/out ./usr-test
 cp ../../hafnium/out/reference/aarch64_linux_clang/ffa-client ./usr-test/ffa-client
 find . | cpio -o -H newc | gzip > ../initrd.img
 cp ../initrd.img ../../hafnium/initrd
-cd ../../hafnium/dts
+cd ../../hafnium/initrd
+find . | cpio -o > ../initrd.img; 
+cd ../dts
 ./convert.sh

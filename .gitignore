@@ -8,3 +8,6 @@ out/
 project/*/
 !project/reference/
 *.dtb
+*.o
+initrd
+initrd.img
