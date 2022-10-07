@@ -1,0 +1,58 @@
+#include "hf/arch/vm/mm.h"
+#include "hf/dlog.h"
+#include "sp-mm.h"
+
+
+/* Number of pages reserved for page tables. Increase if necessary. */
+#define PTABLE_PAGES 4
+
+/**
+ * Start address space mapping at 0x1000 for the mm to create a L2 table to
+ * which the first L1 descriptor points to.
+ * Provided SPMC and SP images reside below 1GB, same as peripherals, this
+ * prevents a case in which the mm library has to break down the first
+ * L1 block descriptor, while currently executing from a region within
+ * the same L1 descriptor. This is not architecturally possible.
+ */
+#define STAGE1_START_ADDRESS (0x1000)
+
+alignas(alignof(struct mm_page_table)) static char ptable_buf
+	[sizeof(struct mm_page_table) * PTABLE_PAGES];
+
+static struct mpool ppool;
+static struct mm_ptable ptable;
+
+struct mm_stage1_locked sp_mm_get_stage1(void)
+{
+	return (struct mm_stage1_locked){.ptable = &ptable};
+}
+
+bool sp_mm_init(void){
+	struct mm_stage1_locked stage1_locked;
+
+	/* Call arch init before calling below mapping routines */
+	if (!arch_vm_mm_init()) {
+		return false;
+	}
+
+	mpool_init(&ppool, sizeof(struct mm_page_table));
+	if (!mpool_add_chunk(&ppool, ptable_buf, sizeof(ptable_buf))) {
+		dlog_error("Failed to add buffer to page-table pool.");
+        return false;
+	}
+
+	if (!mm_ptable_init(&ptable, 0, MM_FLAG_STAGE1, &ppool)) {
+		dlog_error("Unable to allocate memory for page table.");
+        return false;
+	}
+
+	stage1_locked = sp_mm_get_stage1();
+	mm_identity_map(stage1_locked,
+			pa_init((uintptr_t)STAGE1_START_ADDRESS),
+			pa_init(mm_ptable_addr_space_end(MM_FLAG_STAGE1)),
+			MM_MODE_R | MM_MODE_W | MM_MODE_X, &ppool);
+
+	arch_vm_mm_enable(ptable.root);
+
+	return true;
+}

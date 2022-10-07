@@ -1,0 +1,36 @@
+import("//build/image/image.gni")
+import("//build/toolchain/platform.gni")
+
+vm_kernel("mem-borrower") {
+    sources = [
+        "main.c"
+    ]
+    include_dirs = [
+        "//usr-vms/inc"
+    ]
+    deps = [
+        "//src:dlog",
+        "//src:panic",
+        "//src:std",
+        "//src:abort",
+        "../entry:single_pe_vm_entry",
+        "//src/arch/${plat_arch}:entry",
+        "../vm-utils"
+    ]
+}
+manifest("mem-borrower-manifest") {
+  source = "manifest.dts"
+  output = "mem-borrower.dtb"
+}
+
+partition_package("mem-borrower-sp") {
+  pm_offset = "0x1000"
+  img_offset = "0x2000"
+  files = [ [
+        "mem-borrower.dtb",
+        "mem-borrower.bin",
+        ":mem-borrower",
+        ":mem-borrower-manifest",
+      ] ]
+  output = "mem-borrower.img"
+}

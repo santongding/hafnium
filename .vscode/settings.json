@@ -44,7 +44,9 @@
         "irq.h": "c",
         "mm.h": "c",
         "proc_fs.h": "c",
-        "bug.h": "c"
+        "bug.h": "c",
+        "sp-mm.h": "c",
+        "stdbool.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

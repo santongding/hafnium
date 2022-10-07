@@ -1,0 +1,14 @@
+source_set("vm-utils"){
+  sources = [
+    "sp-mm.c"
+  ]
+  include_dirs = [
+    "//usr-vms/inc",
+    "//inc"
+  ]
+  deps = [
+    "//src/arch/aarch64/hftest:mm",
+    "//src:mm",
+    "//src/arch/aarch64:arch"
+  ]
+}

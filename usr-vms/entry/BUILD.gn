@@ -4,3 +4,8 @@ source_set("vm_entry") {
     "sp_secondary_entry.S"
   ]
 }
+source_set("single_pe_vm_entry") {
+  sources = [
+    "entry.S"
+  ]
+}

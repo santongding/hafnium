@@ -17,6 +17,8 @@
 
 #include "vmapi/hf/call.h"
 #include "vmapi/hf/transport.h"
+
+#include "sp-mm.h"
 #define USR_ASSERT(x)                                        \
 	if (!(x)) {                                          \
 		dlog("error in: %s %s", __FILE__, __LINE__); \
@@ -33,7 +35,7 @@
 		EXPECT_EQ(ffa_error_code(v), (ffa_error)); \
 	} while (0)
 
-alignas(4096) uint8_t kstack[8][4096];
+alignas(4096) uint8_t kstack[4096];
 /*
 static alignas(HF_MAILBOX_SIZE) uint8_t send[HF_MAILBOX_SIZE];
 static alignas(HF_MAILBOX_SIZE) uint8_t recv[HF_MAILBOX_SIZE];
@@ -60,40 +62,22 @@ static void register_direct_resp()
 						       0, 0);
 		} else {
 			log_ret(ret);
-			return;
+			ret = ffa_msg_wait();
 		}
-	}
-}
-void test_main_sp(bool is_boot_vcpu){
-	dlog("is boot vcpu:%d\n",is_boot_vcpu);
-	for(;;){
-		register_direct_resp();
 	}
 }
 
 noreturn void kmain(void)
 {
-	extern void secondary_ep_entry(void);
-	struct ffa_value res;
-	dlog_info("start from begin\n");
-	/*
-	 * Initialize the stage-1 MMU and identity-map the entire address space.
-	 */
-/*
-	if (!hftest_mm_init()) {
-		HFTEST_LOG_FAILURE();
-		HFTEST_LOG(HFTEST_LOG_INDENT "Memory initialization failed");
-		abort();
-	}*/
+	dlog("kstack addr before mm init:%x\n",kstack);
+	if(!sp_mm_init()){
+		dlog_error("fall to init page table, spinning...");
+		for(;;);
+	}
+	dlog("kstack addr after mm init:%x\n",kstack);
+	dlog("mm inited\n");
+	register_direct_resp();
 
-	/* Register entry point for secondary vCPUs. */
-	res = ffa_secondary_ep_register((uintptr_t)secondary_ep_entry);
-	log_ret(res);
-
-	/* Register RX/TX buffers via FFA_RXTX_MAP */
-	// set_up_mailbox();
-
-	test_main_sp(true);
 
 	for(;;);
 	/* Do not expect to get to this point, so abort. */
