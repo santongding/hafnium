@@ -91,5 +91,12 @@
 			vcpu_count = <8>;
 			mem_size = <0x100000>;
 		};
+		vm2 {
+			is_ffa_partition;
+			load_address = <0x6480000>;
+			debug_name = "mem-borrower";
+			vcpu_count = <1>;
+			mem_size = <0x100000>;
+		};
 	};
 };
