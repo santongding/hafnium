@@ -12,3 +12,12 @@ source_set("vm-utils"){
     "//src/arch/aarch64:arch"
   ]
 }
+
+source_set("exception"){
+  sources = [
+    "exceptions.S"
+  ]
+  deps = [
+    "//src/arch/aarch64:arch"
+  ]
+}

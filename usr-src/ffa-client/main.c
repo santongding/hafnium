@@ -71,14 +71,14 @@ void echo_by_socket()
 void echo_direct()
 {
 	int f = open("/proc/hf-usr-pipe", O_WRONLY);
-	struct hf_usr_protocol proto = {
+	struct measure_req proto = {
 		.vm_id = 0x8002,
 	};
 	if (f == -1) {
 		dlog("fail to open proc file");
 	} else {
 		int ret = write(f, (void *)&proto,
-				sizeof(struct hf_usr_protocol));
+				sizeof(struct measure_req));
 		dlog("ret: %d\n", ret);
 	}
 }

@@ -15,7 +15,9 @@ vm_kernel("mem-borrower") {
         "//src:abort",
         "../entry:single_pe_vm_entry",
         "//src/arch/${plat_arch}:entry",
-        "../vm-utils"
+        "../vm-utils",
+        "//vmlib",
+        "//src/arch/aarch64/hftest:interrupts_not_test",
     ]
 }
 manifest("mem-borrower-manifest") {

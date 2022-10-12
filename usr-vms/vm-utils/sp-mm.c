@@ -1,11 +1,10 @@
-#include "hf/arch/vm/mm.h"
-#include "hf/dlog.h"
 #include "sp-mm.h"
 
+#include "hf/dlog.h"
 
 /* Number of pages reserved for page tables. Increase if necessary. */
-#define PTABLE_PAGES 4
-
+#define PTABLE_PAGES 5
+#define MM_MODE_NS UINT32_C(0x0080)
 /**
  * Start address space mapping at 0x1000 for the mm to create a L2 table to
  * which the first L1 descriptor points to.
@@ -27,7 +26,8 @@ struct mm_stage1_locked sp_mm_get_stage1(void)
 	return (struct mm_stage1_locked){.ptable = &ptable};
 }
 
-bool sp_mm_init(void){
+bool sp_mm_init(void)
+{
 	struct mm_stage1_locked stage1_locked;
 
 	/* Call arch init before calling below mapping routines */
@@ -35,24 +35,50 @@ bool sp_mm_init(void){
 		return false;
 	}
 
+	dlog("mpool size is %x\n", sizeof(ptable_buf));
 	mpool_init(&ppool, sizeof(struct mm_page_table));
 	if (!mpool_add_chunk(&ppool, ptable_buf, sizeof(ptable_buf))) {
 		dlog_error("Failed to add buffer to page-table pool.");
-        return false;
+		return false;
 	}
 
 	if (!mm_ptable_init(&ptable, 0, MM_FLAG_STAGE1, &ppool)) {
 		dlog_error("Unable to allocate memory for page table.");
-        return false;
+		return false;
 	}
-
+	dlog("start:%x end:%x\n", STAGE1_START_ADDRESS,
+	     mm_ptable_addr_space_end(MM_FLAG_STAGE1));
 	stage1_locked = sp_mm_get_stage1();
-	mm_identity_map(stage1_locked,
-			pa_init((uintptr_t)STAGE1_START_ADDRESS),
-			pa_init(mm_ptable_addr_space_end(MM_FLAG_STAGE1)),
-			MM_MODE_R | MM_MODE_W | MM_MODE_X, &ppool);
+	dlog("success id map:%x\n",
+	     mm_identity_map(stage1_locked,
+			     pa_init((uintptr_t)STAGE1_START_ADDRESS),
+			     pa_init(mm_ptable_addr_space_end(MM_FLAG_STAGE1)),
+			     MM_MODE_R | MM_MODE_W | MM_MODE_X, &ppool));
 
+	dlog("about to enable mm\n");
 	arch_vm_mm_enable(ptable.root);
 
 	return true;
+}
+
+void* mp_ipa(paddr_t begin, paddr_t end, bool is_NS)
+{
+	dlog("mp ipa:%x %x is_ns:%d\n", begin.pa, end.pa,is_NS);
+	return mm_identity_map(sp_mm_get_stage1(), begin, end,
+			       MM_MODE_R | MM_MODE_W | (is_NS ? MM_MODE_NS : 0),
+			       &ppool);
+}
+
+uint64_t get_pgtable_root()
+{
+	return sp_mm_get_stage1().ptable->root.pa;
+}
+
+void flush_tlb(void){
+	arch_mm_sync_table_writes();
+}
+
+
+bool map_va_at_pa(va_addr_t va,pa_addr_t pa){
+	mm_map
 }

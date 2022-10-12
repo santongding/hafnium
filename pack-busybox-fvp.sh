@@ -10,6 +10,7 @@ dtc -I dts -O dtb -o ./initrd/manifest.dtb ./dts/manifest.dts
 # rm ./initrd/manifest.dtb
 dtc -I dts -O dtb -o ./dts/spmc.dtb ./dts/spmc.dts
 dtc -I dts -O dtb -o ./dts/ns-manifest.dtb ./dts/ns-manifest.dts
+dtc -I dts -O dtb -o ./dts/ns-hyper-manifest.dtb ./dts/ns-hyper-manifest.dts
 cd ../busybox/_install
 # cp ../../hafnium/driver/linux/hafnium.ko .
 cp ../../hafnium/driver/usr-driver/hf-usr-driver.ko .
