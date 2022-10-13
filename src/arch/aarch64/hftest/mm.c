@@ -75,7 +75,8 @@ bool arch_vm_mm_init(void)
 	mm_mair_el1 = (0 << (8 * STAGE1_DEVICEINDX)) |
 		      (0xff << (8 * STAGE1_NORMALINDX));
 
-	mm_tcr_el1 = (1 << 20) |		/* TBI, top byte ignored. */
+	mm_tcr_el1 = (2ull << 32) |
+				(1 << 20) |		/* TBI, top byte ignored. */
 		     ((features & 0xf) << 16) | /* PS. */
 		     (0 << 14) |		/* TG0, granule size, 4KB. */
 		     (3 << 12) |		/* SH0, inner shareable. */

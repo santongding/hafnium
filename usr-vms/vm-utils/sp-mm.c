@@ -63,7 +63,7 @@ bool sp_mm_init(void)
 
 void* mp_ipa(paddr_t begin, paddr_t end, bool is_NS)
 {
-	dlog("mp ipa:%x %x is_ns:%d\n", begin.pa, end.pa,is_NS);
+	dlog("mp ipa:%x %x is_ns:%d\n", begin.pa, end.pa, is_NS);
 	return mm_identity_map(sp_mm_get_stage1(), begin, end,
 			       MM_MODE_R | MM_MODE_W | (is_NS ? MM_MODE_NS : 0),
 			       &ppool);
@@ -74,11 +74,18 @@ uint64_t get_pgtable_root()
 	return sp_mm_get_stage1().ptable->root.pa;
 }
 
-void flush_tlb(void){
+void flush_tlb(void)
+{
 	arch_mm_sync_table_writes();
 }
 
-
-bool map_va_at_pa(va_addr_t va,pa_addr_t pa){
-	mm_map
+bool map_va_at_pa(uint64_t va, uint64_t pa, bool is_ns)
+{
+	uint32_t mode = MM_MODE_R | MM_MODE_W | (is_ns ? MM_MODE_NS : 0);
+	return mm_map_va_at_pa(sp_mm_get_stage1(), va_init(va), pa_init(pa),
+			       mode, &ppool);
+}
+void print_table(uint64_t bg, uint64_t ed)
+{
+	mm_print_ptable(sp_mm_get_stage1().ptable, va_init(bg), va_init(ed), MM_FLAG_STAGE1);
 }

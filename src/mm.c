@@ -348,7 +348,64 @@ static struct mm_page_table *mm_populate_table_pte(ptable_addr_t begin,
 
 	return ntable;
 }
+static bool mm_print_level(ptable_addr_t begin, ptable_addr_t end,
+			   struct mm_page_table *table, uint8_t level)
+{
+	pte_t *pte = &table->entries[mm_index(begin, level)];
+	ptable_addr_t level_end = mm_level_end(begin, level);
+	size_t entry_size = mm_entry_size(level);
+	static char *indents[] = {"\t\t\t\t", "\t\t\t", "\t\t", "\t", ""};
 
+	/* Cap end so that we don't go over the current level max. */
+	if (end > level_end) {
+		end = level_end;
+	}
+	if (begin >= end) {
+		return false;
+	}
+	bool success_print = false;
+
+	/* Fill each entry in the table. */
+	while (begin < end) {
+		if (arch_mm_pte_is_block(*pte, level)) {
+			CHECK(level <= 4 && level >= 0);
+			dlog("%s[LEVEL %d] pte:%x\n", indents[level], level,
+			     *pte);
+			/*
+			 * If the entry is already mapped with the right
+			 * attributes, or already absent in the case of
+			 * unmapping, no need to do anything; carry on to the
+			 * next entry.
+			 */
+			success_print = true;
+		} else if (!arch_mm_pte_is_present(*pte, level)) {
+		} else {
+			dlog("%s[LEVEL %d], pte:%x\n", indents[level], level,
+			     *pte);
+			/*
+			 * If the entry is already a subtable get it; otherwise
+			 * replace it with an equivalent subtable and get that.
+			 */
+			CHECK((arch_mm_pte_is_table(*pte, level)));
+
+			struct mm_page_table *nt = mm_page_table_from_pa(
+				arch_mm_table_from_pte(*pte, level));
+			CHECK(nt != NULL);
+			/*
+			 * Recurse to map/unmap the appropriate entries within
+			 * the subtable.
+			 */
+			if (mm_print_level(begin, end, nt, level - 1)) {
+				success_print = true;
+			}
+		}
+
+		begin = mm_start_of_next_block(begin, entry_size);
+		pte++;
+	}
+
+	return success_print;
+}
 /**
  * Updates the page table at the given level to map the given address range to a
  * physical range using the provided (architecture-specific) attributes. Or if
@@ -430,6 +487,89 @@ static bool mm_map_level(ptable_addr_t begin, ptable_addr_t end, paddr_t pa,
 	return true;
 }
 
+static bool mm_map_level_one_page(ptable_addr_t va, paddr_t pa, uint64_t attrs,
+				  struct mm_page_table *table, uint8_t level,
+				  int flags, struct mpool *ppool, uint16_t id)
+{
+	pte_t *pte = &table->entries[mm_index(va, level)];
+	ptable_addr_t level_end = mm_level_end(va, level);
+	size_t entry_size = mm_entry_size(level);
+	bool commit = flags & MM_FLAG_COMMIT;
+	bool unmap = flags & MM_FLAG_UNMAP;
+
+	CHECK(va + PAGE_SIZE <= level_end);
+
+	/* Fill each entry in the table. */
+	if (unmap ? !arch_mm_pte_is_present(*pte, level)
+		  : arch_mm_pte_is_block(*pte, level) &&
+			    *pte == arch_mm_block_pte(level, pa, attrs)) {
+		/*
+		 * If the entry is already mapped with the right
+		 * attributes, or already absent in the case of
+		 * unmapping, no need to do anything; carry on to the
+		 * next entry.
+		 */
+	} else if (PAGE_SIZE >= entry_size &&
+		   (unmap || arch_mm_is_block_allowed(level)) &&
+		   (va & (entry_size - 1)) == 0) {
+		/*
+		 * If the entire entry is within the region we want to
+		 * map, map/unmap the whole entry.
+		 */
+		if (commit) {
+			dlog("curr attrs is:%x\n", attrs);
+			pte_t new_pte =
+				unmap ? arch_mm_absent_pte(level)
+				      : arch_mm_block_pte(level, pa, attrs);
+			/*if((flags&MM_FLAG_STAGE1)&&(attrs&UINT32_C(0x0020))){
+				
+				new_pte |= 1ull<<63;
+			}*/
+			mm_replace_entry(va, pte, new_pte, level, flags, ppool,
+					 id);
+		}
+	} else {
+		/*
+		 * If the entry is already a subtable get it; otherwise
+		 * replace it with an equivalent subtable and get that.
+		 */
+		struct mm_page_table *nt =
+			mm_populate_table_pte(va, pte, level, flags, ppool, id);
+		if (nt == NULL) {
+			return false;
+		}
+
+		/*
+		 * Recurse to map/unmap the appropriate entries within
+		 * the subtable.
+		 */
+		if (!mm_map_level_one_page(va, pa, attrs, nt, level - 1, flags,
+					   ppool, id)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool mm_print_root(struct mm_ptable *t, ptable_addr_t begin,
+			  ptable_addr_t end, uint8_t root_level, int flags)
+{
+	size_t root_table_size = mm_entry_size(root_level);
+	struct mm_page_table *table =
+		&mm_page_table_from_pa(t->root)[mm_index(begin, root_level)];
+	dlog("START PRINT PAGETALBE\n");
+	dlog("Levels:%d flags:%x table:%x bg:%x ed:%x\n", root_level, flags, table,begin, end);
+	dlog("s1 levels:%d s2 levels:%d\n",arch_mm_stage1_max_level(),arch_mm_stage2_max_level());
+	while (begin < end) {
+		mm_print_level(begin, end, table, root_level - 1);
+		begin = mm_start_of_next_block(begin, root_table_size);
+		table++;
+	}
+
+	return true;
+}
+
 /**
  * Updates the page table from the root to map the given address range to a
  * physical range using the provided (architecture-specific) attributes. Or if
@@ -450,6 +590,51 @@ static bool mm_map_root(struct mm_ptable *t, ptable_addr_t begin,
 		}
 		begin = mm_start_of_next_block(begin, root_table_size);
 		table++;
+	}
+
+	return true;
+}
+
+static bool mm_map_root_one_page(struct mm_ptable *t, ptable_addr_t va,
+				 paddr_t pa, uint64_t attrs, uint8_t root_level,
+				 int flags, struct mpool *ppool)
+{
+	struct mm_page_table *table =
+		&mm_page_table_from_pa(t->root)[mm_index(va, root_level)];
+
+	if (!mm_map_level_one_page(va, pa, attrs, table, root_level - 1, flags,
+				   ppool, t->id)) {
+		return false;
+	}
+
+	return true;
+}
+/**
+ * Updates the given table such that the given physical address range is mapped
+ * or not mapped into the address space with the architecture-agnostic mode
+ * provided. Only commits the change if MM_FLAG_COMMIT is set.
+ */
+bool mm_print_ptable(struct mm_ptable *t, vaddr_t va_begin, vaddr_t va_end,
+		     int flags)
+{
+	uint8_t root_level = mm_max_level(flags) + 1;
+	ptable_addr_t ptable_end = mm_ptable_addr_space_end(flags);
+	ptable_addr_t end = mm_round_up_to_page(va_end.va);
+	ptable_addr_t begin = pa_addr(arch_mm_clear_pa(pa_init(va_begin.va)));
+
+	/*
+	 * Assert condition to communicate the API constraint of mm_max_level(),
+	 * that isn't encoded in the types, to the static analyzer.
+	 */
+	assert(root_level >= 2);
+
+	/* Cap end to stay within the bounds of the page table. */
+	if (end > ptable_end) {
+		end = ptable_end;
+	}
+
+	if (!mm_print_root(t, begin, end, root_level, flags)) {
+		return false;
 	}
 
 	return true;
@@ -481,6 +666,39 @@ static bool mm_ptable_identity_map(struct mm_ptable *t, paddr_t pa_begin,
 	}
 
 	if (!mm_map_root(t, begin, end, attrs, root_level, flags, ppool)) {
+		return false;
+	}
+
+	/*
+	 * All TLB invalidations must be complete already if any entries were
+	 * replaced by mm_replace_entry. Sync all page table writes so that code
+	 * following this can use them.
+	 */
+	arch_mm_sync_table_writes();
+
+	return true;
+}
+
+bool mm_ptable_map_one_page(struct mm_ptable *t, vaddr_t va, paddr_t pa,
+			    uint64_t attrs, int flags, struct mpool *ppool)
+{
+	uint8_t root_level = mm_max_level(flags) + 1;
+	ptable_addr_t ptable_end = mm_ptable_addr_space_end(flags);
+	ptable_addr_t va_begin = pa_addr(arch_mm_clear_pa(pa_init(va.va)));
+	paddr_t pa_begin = pa_init(pa_addr(arch_mm_clear_pa(pa)));
+
+	/*
+	 * Assert condition to communicate the API constraint of mm_max_level(),
+	 * that isn't encoded in the types, to the static analyzer.
+	 */
+	assert(root_level >= 2);
+
+	if (va_begin + PAGE_SIZE > ptable_end) {
+		return false;
+	}
+
+	if (!mm_map_root_one_page(t, va_begin, pa_begin, attrs, root_level,
+				  flags, ppool)) {
 		return false;
 	}
 
@@ -1078,6 +1296,23 @@ void *mm_identity_map(struct mm_stage1_locked stage1_locked, paddr_t begin,
 	return NULL;
 }
 
+bool mm_map_va_at_pa(struct mm_stage1_locked stage1_locked, vaddr_t va,
+		     paddr_t pa, uint32_t mode, struct mpool *ppool)
+{
+	int flags = MM_FLAG_STAGE1 | mm_mode_to_flags(mode) | MM_FLAG_COMMIT;
+	return mm_ptable_map_one_page(stage1_locked.ptable, va, pa,
+				      arch_mm_mode_to_stage1_attrs(mode), flags,
+				      ppool);
+}
+
+bool mm_map_va_at_pa_stage2(struct mm_ptable *table, vaddr_t va, paddr_t pa,
+			    uint32_t mode, struct mpool *ppool)
+{
+	int flags = mm_mode_to_flags(mode) | MM_FLAG_COMMIT;
+	return mm_ptable_map_one_page(table, va, pa,
+				      arch_mm_mode_to_stage1_attrs(mode), flags,
+				      ppool);
+}
 /**
  * Updates the hypervisor table such that the given physical address range is
  * not mapped in the address space.

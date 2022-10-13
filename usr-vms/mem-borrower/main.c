@@ -45,7 +45,7 @@ static alignas(HF_MAILBOX_SIZE) uint8_t send[HF_MAILBOX_SIZE];
 static alignas(HF_MAILBOX_SIZE) uint8_t recv[HF_MAILBOX_SIZE];
 
 static uint8_t mem_des_buf[4096];
-
+ 
 static hf_ipaddr_t send_addr = (hf_ipaddr_t)send;
 static hf_ipaddr_t recv_addr = (hf_ipaddr_t)recv;
 static void log_ret(struct ffa_value ret)
@@ -57,36 +57,6 @@ static void read_at_addr(uint64_t addr)
 	dlog("read at addr: %x\n", addr);
 	dlog("value: %x\n", *(uint64_t *)addr);
 }
-#ifdef ENABLE_MM
-
-static void print_pgtable(uint64_t pte, uint64_t va, int level,
-			  uint64_t target_va)
-{
-	// dlog_verbose("[START PRINT LEVEL %d]\n", level);
-	// dlog_verbose("pte addr:%x\n", pte);
-	uint64_t i, j;
-	uint64_t *table = (void *)pte;
-	for (i = 0; i < 512; i++) {
-		if (table[i]) {
-			uint64_t addr = (table[i] >> 12) << 12;
-			uint64_t nva = va | (i << ((4 - level) * 9 + 3));
-			if (nva >= (1ull << 36)) {
-				break;
-			}
-			if (nva == target_va) {
-				for (j = 0; j < level; j++)
-					dlog("\t");
-				dlog("pte:%x, attrs:%x, ipa:%x, level:%d\n",
-				     addr, (table[i] & ((1 << 12) - 1)), nva,
-				     level);
-			}
-			if (!(addr >> 40)) {
-				print_pgtable(addr, nva, level + 1, target_va);
-			}
-		}
-	}
-}
-#endif
 static void log_shared_page(struct ffa_memory_region *region)
 {
 	dlog("start log pages\n");
@@ -97,19 +67,20 @@ static void log_shared_page(struct ffa_memory_region *region)
 	for (i = 0; i < com_mems->constituent_count; i++) {
 		uint64_t addr = com_mems->constituents[i].address;
 #ifdef ENABLE_MM
-		// print_pgtable(get_pgtable_root(), 0, 1, addr);
-		/*if (!(addr = (uint64_t)mp_ipa(
-			      pa_init(addr),
-			      pa_init(addr +
-				      com_mems->constituents[i].page_count *
-					      PAGE_SIZE),
-			      false))) {
-			dlog("Fail to map ipa\n");
-			continue;
-		}*/
-		(void)print_pgtable;
-		print_pgtable(get_pgtable_root(), 0, 1, addr);
+		print_table(0x1000,0x1001);
+		print_table(addr, addr + 1);
+		if (map_va_at_pa(addr, addr, true)) {
+			print_table(addr, addr + 1);
+			// read_at_addr(const_addr | (((1ull << 16) - 1) <<
+			// 48));
+			read_at_addr(const_addr);
+			read_at_addr(addr);
+		} else {
+			dlog_error("unable to map va:%x at pa:%x\n", addr,
+				   const_addr);
+		}
 #endif
+		read_at_addr(const_addr);
 		read_at_addr(addr);
 	}
 }
@@ -172,6 +143,8 @@ noreturn void kmain(void)
 	// dlog("kstack addr after mm init:%x\n", kstack);
 	dlog("mm inited\n");
 #endif
+
+	// print_table(0,1ull<<63);
 
 	read_at_addr(const_addr);
 	read_at_addr(const_addr + 0x1000);

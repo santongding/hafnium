@@ -145,3 +145,11 @@ bool mm_unmap(struct mm_stage1_locked stage1_locked, paddr_t begin, paddr_t end,
 void mm_defrag(struct mm_stage1_locked stage1_locked, struct mpool *ppool);
 
 bool mm_init(struct mpool *ppool);
+
+bool mm_map_va_at_pa(struct mm_stage1_locked stage1_locked,vaddr_t va, paddr_t pa,uint32_t mode,struct mpool *ppool);
+
+bool mm_map_va_at_pa_stage2(struct mm_ptable *table, vaddr_t va, paddr_t pa,
+			    uint32_t mode, struct mpool *ppool);
+
+bool mm_print_ptable(struct mm_ptable *t, vaddr_t va_begin,
+					 vaddr_t va_end, int flags);

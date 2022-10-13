@@ -54,6 +54,18 @@ source_set("interrupts") {
   ]
 }
 
+source_set("interrupts_not_test") {
+  public_configs = [
+    "//src/arch/aarch64:config",
+    "//test/hftest:hftest_config",
+  ]
+  sources = [
+    "events.c",
+    "exceptions.S",
+    "interrupts_not_test.c",
+  ]
+}
+
 # GICv3 EL1 driver.
 source_set("interrupts_gicv3") {
   testonly = true
