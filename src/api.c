@@ -433,6 +433,9 @@ struct ffa_value api_ffa_partition_info_get(struct vcpu *current,
 	struct vm_locked vm_locked;
 	struct ffa_value ret;
 
+	dlog_info("uuid is null:%d\n",uuid_is_null);
+	dlog_info("vm count:%d\n",vm_get_count());
+
 	/* Bits 31:1 Must Be Zero */
 	if ((flags & ~FFA_PARTITION_COUNT_FLAG) != 0) {
 		return ffa_error(FFA_INVALID_PARAMETERS);
@@ -451,6 +454,7 @@ struct ffa_value api_ffa_partition_info_get(struct vcpu *current,
 		 */
 		for (uint16_t index = 0; index < vm_get_count(); ++index) {
 			struct vm *vm = vm_find_index(index);
+			dlog_info("vm id:%d\n",vm->id);
 
 			if (uuid_is_null || ffa_uuid_equal(uuid, &vm->uuid)) {
 				uint16_t array_index = vm_count;
@@ -521,6 +525,7 @@ struct ffa_value api_ffa_partition_info_get(struct vcpu *current,
  */
 struct ffa_value api_ffa_id_get(const struct vcpu *current)
 {
+	dlog_info("current cpu: %d, id:%d\n",current->cpu->id, current->vm->id);
 	return (struct ffa_value){.func = FFA_SUCCESS_32,
 				  .arg2 = current->vm->id};
 }
@@ -1069,6 +1074,8 @@ static bool api_vm_configure_stage1(struct mm_stage1_locked mm_stage1_locked,
 		mm_defrag(mm_stage1_locked, local_page_pool);
 		goto fail;
 	}
+
+	dlog_verbose("try read send mailbox at sel2:<%x> %x\n", pa_send_begin.pa,*(uint64_t*)pa_send_begin.pa);
 
 	/*
 	 * Map the receive page as writable in the hypervisor address space. On
@@ -2742,6 +2749,7 @@ struct ffa_value api_ffa_mem_send(uint32_t share_func, uint32_t length,
 		 * Hafnium only supports passing the descriptor in the TX
 		 * mailbox.
 		 */
+		dlog_verbose("Hafnium only supports passing the descriptor in the TX mailbox.");
 		return ffa_error(FFA_INVALID_PARAMETERS);
 	}
 
@@ -2773,6 +2781,7 @@ struct ffa_value api_ffa_mem_send(uint32_t share_func, uint32_t length,
 	sl_unlock(&from->lock);
 
 	if (from_msg == NULL) {
+		dlog_verbose("From msg is null");
 		return ffa_error(FFA_INVALID_PARAMETERS);
 	}
 
@@ -2783,6 +2792,7 @@ struct ffa_value api_ffa_mem_send(uint32_t share_func, uint32_t length,
 	 */
 	if (fragment_length > HF_MAILBOX_SIZE ||
 	    fragment_length > MM_PPOOL_ENTRY_SIZE) {
+		dlog_verbose("Fragment lengh is larger than mpool entry size");
 		return ffa_error(FFA_INVALID_PARAMETERS);
 	}
 	memory_region = (struct ffa_memory_region *)mpool_alloc(&api_page_pool);
@@ -2842,6 +2852,7 @@ struct ffa_value api_ffa_mem_send(uint32_t share_func, uint32_t length,
 			memory_region->receivers[i]
 				.receiver_permissions.receiver;
 		to = vm_find(receiver_id);
+		dlog_verbose("recv id:%d recv world:%d from vm:%d\n",receiver_id, vm_id_is_current_world(receiver_id), from->id);
 
 		if (vm_id_is_current_world(receiver_id) &&
 		    (to == NULL || to == from)) {
@@ -2861,7 +2872,8 @@ struct ffa_value api_ffa_mem_send(uint32_t share_func, uint32_t length,
 				!vm_id_is_current_world(receiver_id);
 		}
 	}
-
+	
+	dlog("target other world:%d\n",targets_other_world);
 	/* Allow for one memory region to be shared to the TEE. */
 	if (targets_other_world) {
 		assert(memory_region->receiver_count == 1 &&
@@ -3151,8 +3163,9 @@ struct ffa_value api_ffa_mem_frag_tx(ffa_memory_handle_t handle,
 		dlog_verbose("Failed to allocate fragment copy.\n");
 		return ffa_error(FFA_NO_MEMORY);
 	}
+	dlog_verbose("begin memcpy\n");
 	memcpy_s(fragment_copy, MM_PPOOL_ENTRY_SIZE, from_msg, fragment_length);
-
+	dlog_verbose("tx handle:%x\n",handle);
 	/*
 	 * Hafnium doesn't support fragmentation of memory retrieve requests
 	 * (because it doesn't support caller-specified mappings, so a request

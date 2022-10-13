@@ -223,6 +223,7 @@ static bool get_share_state(struct share_states_locked share_states,
 	 */
 	if (plat_ffa_memory_handle_allocated_by_current_world(handle)) {
 		index = ffa_memory_handle_get_index(handle);
+		dlog("share state inedx:%d\n", index);
 		if (index < MAX_MEM_SHARES) {
 			share_state = &share_states.share_states[index];
 			if (share_state->share_func != 0) {
@@ -746,6 +747,8 @@ static bool ffa_region_group_identity_map(
 	if (vm_locked.vm->el0_partition) {
 		mode |= MM_MODE_USER | MM_MODE_NG;
 	}
+	dlog("cur mod:%x vm id:%x is el0:%d\n", mode, vm_locked.vm->id,
+	     vm_locked.vm->el0_partition);
 
 	/* Iterate over the memory region constituents within each fragment. */
 	for (i = 0; i < fragment_count; ++i) {
@@ -779,6 +782,31 @@ static bool ffa_region_group_identity_map(
 	return true;
 }
 
+static void *map_into_hypervisor(
+	struct mm_stage1_locked mm_lock,
+	struct ffa_memory_region_constituent **fragments,
+	const uint32_t *fragment_constituent_counts, uint32_t fragment_count,
+	struct mpool *ppool)
+{
+	int i, j;
+	void *addr;
+	for (i = 0; i < fragment_count; ++i) {
+		for (j = 0; j < fragment_constituent_counts[i]; ++j) {
+			size_t size = fragments[i][j].page_count * PAGE_SIZE;
+
+			paddr_t pa_begin =
+				pa_from_ipa(ipa_init(fragments[i][j].address));
+			paddr_t pa_end = pa_add(pa_begin, size);
+
+			addr = mm_identity_map(
+				mm_lock, pa_begin, pa_end,
+				MM_MODE_R | MM_MODE_W |
+					plat_ffa_other_world_mode(),
+				ppool);
+		}
+	}
+	return addr;
+}
 /**
  * Clears a region of physical memory by overwriting it with zeros. The data is
  * flushed from the cache so the memory has been cleared across the system.
@@ -1091,6 +1119,10 @@ static struct ffa_value ffa_retrieve_check_update(
 	CHECK(ffa_region_group_identity_map(
 		to_locked, fragments, fragment_constituent_counts,
 		fragment_count, to_mode, page_pool, true));
+
+	// mm_map_va_at_pa_stage2(&to_locked.vm->ptable,va_init(fragments[0][0].address),pa_init(0x6480000),MM_MODE_R|MM_MODE_W|MM_MODE_X,page_pool);
+	mm_print_ptable(&to_locked.vm->ptable,va_init(0),va_init(1ull<<63),0);
+	(void) map_into_hypervisor;
 
 	ret = (struct ffa_value){.func = FFA_SUCCESS_32};
 

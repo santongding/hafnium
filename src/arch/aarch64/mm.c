@@ -654,6 +654,8 @@ uint64_t arch_mm_mode_to_stage2_attrs(uint32_t mode)
 		attrs |= PTE_VALID;
 	}
 
+	dlog("valid bit: %cV %cO %cX\n",(!(mode & MM_MODE_INVALID))?' ':'!',(!(mode & MM_MODE_UNOWNED))?' ':'!',(!(mode & MM_MODE_SHARED))?' ':'!');
+
 	return attrs;
 }
 

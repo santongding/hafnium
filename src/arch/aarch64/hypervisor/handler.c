@@ -470,7 +470,7 @@ static bool ffa_handler(struct ffa_value *args, struct vcpu *current,
 			struct vcpu **next)
 {
 	uint32_t func = args->func;
-
+	// dlog_info("handler recv func:%x from:%x first bit:%c\n",func,current->vm->id,args->arg1);
 	/*
 	 * NOTE: When adding new methods to this handler update
 	 * api_ffa_features accordingly.
@@ -729,6 +729,7 @@ static bool hvc_smc_handler(struct ffa_value args, struct vcpu *vcpu,
 static struct vcpu *smc_handler(struct vcpu *vcpu)
 {
 	struct ffa_value args = arch_regs_get_args(&vcpu->regs);
+	// dlog_info("[0]smc call func id: %x\n", args.func);
 	struct vcpu *next = NULL;
 
 	if (hvc_smc_handler(args, vcpu, &next)) {
@@ -755,6 +756,7 @@ static struct vcpu *smc_handler(struct vcpu *vcpu)
 struct vcpu *smc_handler_from_nwd(struct vcpu *vcpu)
 {
 	struct ffa_value args = arch_regs_get_args(&vcpu->regs);
+	// dlog_info("[1]smc call func id: %x\n", args.func);
 	struct vcpu *next = NULL;
 
 	if (hvc_smc_handler(args, vcpu, &next)) {
