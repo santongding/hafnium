@@ -695,7 +695,6 @@ static void vcpu_update_virtual_interrupts(struct vcpu *next)
 static bool hvc_smc_handler(struct ffa_value args, struct vcpu *vcpu,
 			    struct vcpu **next)
 {
-	// dlog_verbose("recv hvc/smc func:%x\n", args.func);
 	/* Do not expect PSCI calls emitted from within the secure world. */
 #if SECURE_WORLD == 0
 	if (psci_handler(vcpu, args.func, args.arg1, args.arg2, args.arg3,
