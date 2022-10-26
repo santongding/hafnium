@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: iris",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/iris_debug/iris_debug.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd" : "${workspaceFolder}",
+            "preLaunchTask": "run-fvp",
+        },  
+        {
             "type": "gdb",
             "request": "attach",
             "name": "gdb Attach",

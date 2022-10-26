@@ -2,6 +2,7 @@ group("usr-vms"){
     deps=[
         "hello:hello-sp",
         "dead-loop:dead-loop-sp",
-        "mem-borrower:mem-borrower-sp"
+        "mem-borrower:mem-borrower-sp",
+        "optee:optee-sp"
     ]
 }

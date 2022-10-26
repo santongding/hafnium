@@ -87,7 +87,7 @@
 		vm1 {
 			is_ffa_partition;
 			load_address = <0x6380000>;
-			debug_name = "Hello";
+			debug_name = "op-tee";
 			vcpu_count = <8>;
 			mem_size = <0x100000>;
 		};

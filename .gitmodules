@@ -21,6 +21,3 @@
 	path = third_party/linux
 	url = https://git.trustedfirmware.org/hafnium/third_party/linux
 	shallow = true
-[submodule "driver/usr-driver"]
-	path = driver/usr-driver
-	url = git@github.com:santongding/hafnium-usr-driver.git
