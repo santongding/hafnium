@@ -3,6 +3,13 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
+       
+        {
+            "label":"run-fvp",
+            "type":"shell",
+            "command":"./run-fvp.sh ' --iris-connect tcpserver,port=7100 --print-port-number'",
+            "isBackground": true,
+        },
         {
             "label":"run-qemu",
             "type":"shell",

@@ -12,3 +12,4 @@ project/*/
 initrd
 initrd.img
 ns-manifest-o.dts
+*.pyc

@@ -188,6 +188,8 @@ bool vcpu_handle_page_fault(const struct vcpu *current,
 			current->vm->el0_partition ? 1 : 2, f->pc, vm->id,
 			vcpu_index(current), f->vaddr, f->ipaddr, f->mode,
 			mode);
+		dlog("Spinning...");
+		for(;;);
 	}
 
 	return resume;

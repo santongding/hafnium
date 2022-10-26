@@ -518,6 +518,8 @@ static bool load_secondary(struct mm_stage1_locked stage1_locked,
 	size_t kernel_size = 0;
 	const size_t mem_size = pa_difference(mem_begin, mem_end);
 	uint32_t map_mode;
+	int i = 0;
+	uint32_t *addr;
 
 	/*
 	 * Load the kernel if a filename is specified in the VM manifest.
@@ -597,6 +599,8 @@ static bool load_secondary(struct mm_stage1_locked stage1_locked,
 		dlog_error("Unable to initialise memory.\n");
 		ret = false;
 		goto out;
+	}else {
+		dlog_info("VM %d mapped: %x - %x\n", vm_locked.vm->id, mem_begin, mem_end);
 	}
 
 	if (manifest_vm->is_ffa_partition) {
@@ -854,7 +858,17 @@ static bool load_secondary(struct mm_stage1_locked stage1_locked,
 
 	ret = true;
 
+
 out:
+
+
+
+
+	for(i = 0; i < 10; i++){
+		addr = ((uint32_t*)vm_locked.vm->vcpus[0].regs.pc) + i;
+		dlog("vm enter addr:%x inst:%x\n", addr, *addr);
+	}
+
 	vm_unlock(&vm_locked);
 
 	return ret;

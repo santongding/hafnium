@@ -1374,6 +1374,10 @@ bool mm_init(struct mpool *ppool)
 	mm_identity_map(stage1_locked, layout_data_begin(), layout_data_end(),
 			MM_MODE_R | MM_MODE_W, ppool);
 
+	// map other sp's space, to help debugging
+	mm_identity_map(stage1_locked, layout_stacks_end(), pa_init(0x7000000),
+			MM_MODE_R, ppool);
+
 	/* Arch-specific stack mapping. */
 	arch_stack_mm_init(stage1_locked, ppool);
 
