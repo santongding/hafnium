@@ -95,7 +95,7 @@ void arch_regs_reset(struct vcpu *vcpu)
 
 	cnthctl = 0;
 
-	if (is_primary) {
+	//if (is_primary) {
 		/*
 		 * cnthctl_el2 is redefined when VHE is enabled.
 		 * EL1PCTEN, don't trap phys cnt access.
@@ -106,7 +106,9 @@ void arch_regs_reset(struct vcpu *vcpu)
 		} else {
 			cnthctl |= (1U << 0) | (1U << 1);
 		}
-	}
+	//}
+
+	// cnthctl |= (1U << 12); //ECV bit
 
 	r->hcr_el2 = get_hcr_el2_value(vm_id, vcpu->vm->el0_partition);
 	r->lazy.cnthctl_el2 = cnthctl;

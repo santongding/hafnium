@@ -8,7 +8,7 @@
             "name": "Python: iris",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/iris_debug/iris_debug.py",
+            "program": "${workspaceFolder}/python-scripts/iris_debug.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd" : "${workspaceFolder}",

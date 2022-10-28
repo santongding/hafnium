@@ -21,7 +21,7 @@
 #include "vmapi/hf/transport.h"
 #define ENABLE_MM
 
-const uint64_t const_addr = 0x6480000;
+const uint64_t const_addr = 0x6680000;
 #include "sp-mm.h"
 #define USR_ASSERT(x)                                        \
 	if (!(x)) {                                          \

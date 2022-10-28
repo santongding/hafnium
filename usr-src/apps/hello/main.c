@@ -15,7 +15,7 @@ __uint64_t read_el(){
 }
 int main(){
     printf("hello, hafnium!\n");
-    printf("%x\n",read_el());
+    // printf("%x\n",read_el());
     //dfs(1);
     return 0;
 }

@@ -924,8 +924,12 @@ static void inject_el1_unknown_exception(struct vcpu *vcpu, uintreg_t esr_el2)
 		GET_ISS_CRN(esr_el2), GET_ISS_CRM(esr_el2),
 		GET_ISS_OP2(esr_el2), GET_ISS_RT(esr_el2));
 
+	dlog_notice("VM PC:%x\n",vcpu->regs.pc);
+
 	dlog_notice("Injecting Unknown Reason exception into VM %#x.\n",
 		    vcpu->vm->id);
+
+	panic("");
 
 	inject_el1_exception(vcpu, esr_el1_value, far_el1_value);
 }
@@ -1270,6 +1274,8 @@ void handle_system_register_access(uintreg_t esr_el2)
 	uintreg_t ec = GET_ESR_EC(esr_el2);
 
 	CHECK(ec == EC_MSR);
+
+	// dlog_verbose("Handle system registers access\n");
 	/*
 	 * Handle accesses to debug and performance monitor registers.
 	 * Inject an exception for unhandled/unsupported registers.
@@ -1290,6 +1296,7 @@ void handle_system_register_access(uintreg_t esr_el2)
 			return;
 		}
 	} else {
+		dlog_verbose("unknown access type\n");
 		inject_el1_unknown_exception(vcpu, esr_el2);
 		return;
 	}

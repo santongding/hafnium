@@ -12,7 +12,7 @@ lib_folder = $(abspath ../prebuilts/linux-aarch64/musl/lib)
 libs := $(wildcard $(lib_folder)/*.a)
 # libs += $(lib_folder)/crt1.o
 cflags = -g3
-ldflags = -g3 -I ${inc_folder} ${libs} -nostdinc -lgcc --static
+ldflags = -g3 -I ${inc_folder} ${libs}
 $(info $(libs))
 
 subdirs := $(wildcard apps/*)

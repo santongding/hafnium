@@ -2,7 +2,7 @@ import("//build/image/image.gni")
 import("//build/toolchain/platform.gni")
 copy("optee") {
     sources = [
-      "/home/os/Documents/arm-develop/optee/optee_os/out/arm-plat-v8a_fvp/core/tee.bin",
+      "/home/os/Documents/arm-develop/optee/optee_os/out/arm-plat-v8a_fvp/core/tee_no_head.bin",
     ]
     outputs = [
       "$target_out_dir/optee.bin"

@@ -11,9 +11,16 @@ dtc -I dts -O dtb -o ./initrd/manifest.dtb ./dts/manifest.dts
 dtc -I dts -O dtb -o ./dts/spmc.dtb ./dts/spmc.dts
 dtc -I dts -O dtb -o ./dts/ns-manifest.dtb ./dts/ns-manifest.dts
 dtc -I dts -O dtb -o ./dts/ns-hyper-manifest.dtb ./dts/ns-hyper-manifest.dts
+make -f image.mk
 cd ../busybox/_install
 # cp ../../hafnium/driver/linux/hafnium.ko .
-cp ../../hafnium/driver/usr-driver/hf-usr-driver.ko .
+# cp ../../hafnium/driver/usr-driver/hf-usr-driver.ko .
+# cp ../../optee/optee_client/out/export/usr/sbin/tee-supplicant .
+# cp -r ../../optee/optee_client/out/export/usr/lib .
+# cp /home/os/Documents/arm-develop/optee/out-br/target/lib/libc.so.6 ./lib
+# cp /home/os/Documents/arm-develop/optee/toolchains/aarch64/aarch64-none-linux-gnu/libc/sbin/ldconfig ./sbin
+# cp -r ../../optee/optee_client/tmp/optee_client/include/ ./bin/teec
+# cp -r /home/os/Documents/arm-develop/optee/optee_client/out/export/usr/lib .
 # cp -r ../../hafnium/prebuilts/linux-aarch64/musl/lib .
 rm -rf ./usr-test && rm -rf ./usr_test
 cp -r ../../hafnium/usr-src/out ./usr-test
@@ -22,5 +29,5 @@ find . | cpio -o -H newc | gzip > ../initrd.img
 cp ../initrd.img ../../hafnium/initrd
 cd ../../hafnium/initrd
 find . | cpio -o > ../initrd.img; 
-cd ../dts
-./convert.sh
+# cd ../dts
+# ./convert.sh
