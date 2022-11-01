@@ -15,9 +15,12 @@ config("arch_config") {
          "secure world set to <${secure_world}>")
   assert(enable_vhe == "0" || enable_vhe == "1",
          "enable_vhe is set to <${enable_vhe}>")
+  assert(enable_op_tee == "0" || enable_op_tee == "1",
+         "enable_op_tee is set to <${enable_op_tee}>")
   defines = [
     "SECURE_WORLD=${secure_world}",
     "ENABLE_VHE=${enable_vhe}",
+    "ENABLE_OP_TEE=${enable_op_tee}"
   ]
 }
 

@@ -455,6 +455,110 @@ static void smc_forwarder(const struct vm *vm, struct ffa_value *args)
 
 	*args = ret;
 }
+#if ENABLE_OP_TEE == 1
+static void ffa_value_roll(struct ffa_value * args){
+	uint64_t *arr = (uint64_t *)args;
+	int i;
+	for(i = 1; i < 8 ;i++){
+		arr[i - 1] = arr[i];
+	}
+	arr[7] = 0;
+}
+
+
+static bool ffa_handler_forward(struct ffa_value *args, struct vcpu *current,ffa_vm_id_t target_id,
+			struct vcpu **next)
+{	
+	struct vm *receiver_vm;
+	struct vm_locked receiver_locked;
+	struct vcpu *receiver_vcpu;
+	struct two_vcpu_locked vcpus_locked;
+	receiver_vm = vm_find(target_id);
+	// dlog_verbose("cur vm:%x, target vm:%x\n",current->vm->id, target_id);
+
+
+
+
+	if(receiver_vm == NULL){
+		goto invalid_out;
+	}
+
+	receiver_vcpu = api_ffa_get_vm_vcpu(receiver_vm, current);
+	if(receiver_vcpu == NULL){
+		goto invalid_out;
+	}
+
+	if(args->func == FFA_RUN_32){ // target might be intterupted
+		assert(receiver_vcpu->is_tunneling && receiver_vcpu->state == VCPU_STATE_PREEMPTED);
+		*args = api_ffa_run(target_id, vcpu_index(receiver_vcpu), current, next);
+		dlog_verbose("[FORWARD]next vm:%x\n", (*next)->vm->id);
+		return true;
+	}
+
+	if(args->func == FFA_MSG_SEND_DIRECT_REQ_32 && args->arg7 == -1){
+		args -> arg7 = 0;
+		ffa_value_roll(args);
+		panic("tmp panic");
+	}
+
+
+	receiver_locked = vm_lock(receiver_vm);
+	vcpus_locked = vcpu_lock_both(receiver_vcpu, current);
+
+	// dlog_verbose("[ck 0]\n");
+
+	dlog_verbose("recv cpu state:%d\n", receiver_vcpu->state);
+	if(current->is_tunneling){
+		assert(receiver_vcpu->state == VCPU_STATE_BLOCKED);
+	}else{
+		assert(receiver_vcpu->state == VCPU_STATE_WAITING);
+		if(receiver_vcpu->state != VCPU_STATE_WAITING){
+			// dlog_verbose("args:%x func:%x\n", args, args->func);
+			*args = ffa_error(FFA_BUSY);
+			goto out;
+		}
+	}
+	// dlog_verbose("[ck 1]\n");
+
+	assert(receiver_vcpu->regs_available);
+	current->regs_available = true;
+
+	// dlog_verbose("[ck 2]\n");
+
+	receiver_vcpu->cpu = current->cpu;
+	receiver_vcpu->state = VCPU_STATE_RUNNING;
+	receiver_vcpu->regs_available = false;
+
+	arch_regs_set_retval(&receiver_vcpu->regs, *args);
+
+	if(current->is_tunneling)
+		current->state = VCPU_STATE_WAITING;
+	else
+		current->state = VCPU_STATE_BLOCKED;
+	*next = receiver_vcpu;
+
+	assert(!receiver_vcpu->is_tunneling);
+	if(current->is_tunneling){
+		current->is_tunneling = false;
+	}else{
+		receiver_vcpu->is_tunneling = true;
+	}
+
+
+	goto out;
+out:
+	sl_unlock(&receiver_vcpu->lock);
+	sl_unlock(&current->lock);
+	vm_unlock(&receiver_locked);
+	if((*next)!=NULL)
+		dlog_verbose("[FORWARD OUT]next vm: %x\n", (*next)->vm->id);
+	return true;
+invalid_out:
+	dlog_verbose("Invalid params to foward to op-tee\n");
+	*args = ffa_error(FFA_INVALID_PARAMETERS);
+	return true;
+}
+#endif
 
 /**
  * In the normal world, ffa_handler is always called from the virtual FF-A
@@ -470,7 +574,32 @@ static bool ffa_handler(struct ffa_value *args, struct vcpu *current,
 			struct vcpu **next)
 {
 	uint32_t func = args->func;
-	// dlog_info("handler recv func:%x from:%x first bit:%c\n",func,current->vm->id,args->arg1);
+
+	if(func == FFA_CONSOLE_LOG_32 || func == FFA_CONSOLE_LOG_64){
+		*args = api_ffa_console_log(*args, current);
+		return true;
+	}
+	if(func == HF_DEBUG_LOG){
+		return false;
+	}
+
+	dlog_info("[cpu:%d]handler recv func:%x a1:%x a7:%x from:%x is tunneling:%d\n", current->cpu->id,func, args->arg1, args->arg7,current->vm->id,current->is_tunneling);
+#if ENABLE_OP_TEE == 1
+	if(current->vm->id == HF_PRIMARY_VM_ID) {
+		if(ffa_handler_forward(args, current, 0x8001, next)){
+			return true;
+		}else{
+			panic("Fail to tunnel");
+		}
+	}else if(current->vm->id == 0x8001 && current->is_tunneling){
+		if(!ffa_handler_forward(args, current, HF_PRIMARY_VM_ID, next)){
+			panic("Fail to tunnel back");
+		}
+		return true;
+	}
+#endif
+
+
 	/*
 	 * NOTE: When adding new methods to this handler update
 	 * api_ffa_features accordingly.
@@ -485,6 +614,7 @@ static bool ffa_handler(struct ffa_value *args, struct vcpu *current,
 		ffa_uuid_init(args->arg1, args->arg2, args->arg3, args->arg4,
 			      &uuid);
 		*args = api_ffa_partition_info_get(current, &uuid, args->arg5);
+		dlog_verbose("current vm:%x return func:%x, return code:%d\n", current->vm->id,args->func, args->arg2);
 		return true;
 	}
 	case FFA_ID_GET_32:
@@ -717,6 +847,8 @@ static bool hvc_smc_handler(struct ffa_value args, struct vcpu *vcpu,
 #endif
 		arch_regs_set_retval(&vcpu->regs, args);
 		vcpu_update_virtual_interrupts(*next);
+		if((*next)!=NULL)
+			dlog_verbose("[HVC_SMC]next vm:%x\n",(*next)!=NULL?(*next)->vm->id:-1);
 		return true;
 	}
 
@@ -733,6 +865,8 @@ static struct vcpu *smc_handler(struct vcpu *vcpu)
 	struct vcpu *next = NULL;
 
 	if (hvc_smc_handler(args, vcpu, &next)) {
+		if(next!=NULL)
+			dlog_verbose("[SMC]next vm:%x\n", next->vm->id);
 		return next;
 	}
 
@@ -756,7 +890,7 @@ static struct vcpu *smc_handler(struct vcpu *vcpu)
 struct vcpu *smc_handler_from_nwd(struct vcpu *vcpu)
 {
 	struct ffa_value args = arch_regs_get_args(&vcpu->regs);
-	// dlog_info("[1]smc call func id: %x\n", args.func);
+	dlog_info("smc call from nwd, func: %x\n", args.func);
 	struct vcpu *next = NULL;
 
 	if (hvc_smc_handler(args, vcpu, &next)) {
@@ -1230,6 +1364,8 @@ struct vcpu *sync_lower_exception(uintreg_t esr, uintreg_t far)
 
 		/* Skip the SMC instruction. */
 		vcpu->regs.pc = smc_pc + GET_NEXT_PC_INC(esr);
+
+		dlog_verbose("[EC_SMC]next vm:%x\n", vcpu->vm->id);
 
 		return next;
 	}

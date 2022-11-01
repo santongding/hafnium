@@ -223,7 +223,7 @@ struct vcpu *api_preempt(struct vcpu *current)
 		.func = FFA_INTERRUPT_32,
 		.arg1 = ffa_vm_vcpu(current->vm->id, vcpu_index(current)),
 	};
-
+	dlog_verbose("[PREEMPT] func:%x\n", ret.func);
 	return api_switch_to_primary(current, ret, VCPU_STATE_PREEMPTED);
 }
 
@@ -483,7 +483,7 @@ struct ffa_value api_ffa_partition_info_get(struct vcpu *current,
 
 	/* If UUID is Null vm_count must not be zero at this stage. */
 	CHECK(!uuid_is_null || vm_count != 0);
-
+	dlog_verbose("start to forward\n");
 	/*
 	 * When running the Hypervisor:
 	 * - If UUID is Null the Hypervisor forwards the query to the SPMC for
@@ -501,6 +501,7 @@ struct ffa_value api_ffa_partition_info_get(struct vcpu *current,
 	 * and is not Null.
 	 */
 	if (vm_count == 0) {
+		dlog_verbose("Unrecognized UUID\n");
 		return ffa_error(FFA_INVALID_PARAMETERS);
 	}
 
@@ -1075,7 +1076,7 @@ static bool api_vm_configure_stage1(struct mm_stage1_locked mm_stage1_locked,
 		goto fail;
 	}
 
-	dlog_verbose("try read send mailbox at sel2:<%x> %x\n", pa_send_begin.pa,*(uint64_t*)pa_send_begin.pa);
+	// dlog_verbose("try read send mailbox at sel2:<%x> %x\n", pa_send_begin.pa,*(uint64_t*)pa_send_begin.pa);
 
 	/*
 	 * Map the receive page as writable in the hypervisor address space. On

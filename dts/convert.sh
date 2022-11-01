@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Path to the input DTB
-KERNEL_DTB=./ns-manifest.dtb
+KERNEL_DTB=/home/os/Documents/arm-develop/optee/linux/arch/arm64/boot/dts/arm/fvp-base-revc.dtb
 # Path to the output DTB
 PATCHED_KERNEL_DTB=./ns-manifest-o.dtb
 PATCHED_KERNEL_DTS=./ns-manifest-o.dts

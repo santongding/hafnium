@@ -13,6 +13,7 @@ dtc -I dts -O dtb -o ./dts/ns-manifest.dtb ./dts/ns-manifest.dts
 dtc -I dts -O dtb -o ./dts/ns-hyper-manifest.dtb ./dts/ns-hyper-manifest.dts
 make -f image.mk
 cd ../busybox/_install
+cp /home/os/Documents/arm-develop/optee/out-br/target/usr/bin/santongding_hello .
 # cp ../../hafnium/driver/linux/hafnium.ko .
 # cp ../../hafnium/driver/usr-driver/hf-usr-driver.ko .
 # cp ../../optee/optee_client/out/export/usr/sbin/tee-supplicant .

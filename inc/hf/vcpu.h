@@ -137,6 +137,8 @@ struct vcpu {
 	 * mechanism and perform appropriate bookkeeping.
 	 */
 	bool implicit_completion_signal;
+
+	bool is_tunneling;
 };
 
 /** Encapsulates a vCPU whose lock is held. */

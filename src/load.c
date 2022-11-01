@@ -594,6 +594,24 @@ static bool load_secondary(struct mm_stage1_locked stage1_locked,
 		map_mode = MM_MODE_R | MM_MODE_W | MM_MODE_X;
 	}
 
+#if ENABLE_OP_TEE == 1
+	if(vm_locked.vm->id == 0x8001){
+
+		if (!vm_identity_map(vm_locked, pa_init(0),
+					pa_init(UINT64_C(1024) * 1024 * 1024 * 1024),
+					MM_MODE_R | MM_MODE_W | MM_MODE_X,
+					ppool, NULL)) {
+			dlog_error(
+				"Unable to initialise address space for "
+				"OP-TEE.\n");
+			goto out;
+		}else{
+			dlog_info("Success to map all memory to OP-TEE\n");
+		}
+	}
+
+
+#endif
 	if (!vm_identity_map(vm_locked, mem_begin, mem_end, map_mode, ppool,
 			     &secondary_entry)) {
 		dlog_error("Unable to initialise memory.\n");

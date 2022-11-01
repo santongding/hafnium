@@ -24,4 +24,6 @@ declare_args() {
   enable_vhe = "0"
 
   enable_mte = "0"
+
+  enable_op_tee = "0"
 }
